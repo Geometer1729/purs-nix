@@ -100,9 +100,9 @@ deps:
             )
             partial;
 
-        foreign-stuff = deps: prefix:
+        add-foreign-deps = deps: prefix:
           let
-            foreign-stuff' =
+            foreign-deps =
               let
                 split-foreign = init: foreign':
                   l.foldl
@@ -139,6 +139,8 @@ deps:
                 (l.mapAttrsToList
                    (module: { derivation, paths }:
                       let
+                        filename = "purs-nix.js";
+
                         purs-nix-js =
                           l.pipe paths
                             [ (l.mapAttrsToList
@@ -150,12 +152,12 @@ deps:
                               )
 
                               (l.concatStringsSep "\n")
-                              (p.writeText "purs-nix.js")
+                              (p.writeText filename)
                             ];
                       in
-                      "cp ${purs-nix-js} ${prefix}/${module}/purs-nix.js"
+                      "cp ${purs-nix-js} ${prefix}/${module}/${filename}"
                    )
-                   foreign-stuff'.derivation
+                   foreign-deps.derivation
                 );
 
             foreign-node =
@@ -164,7 +166,7 @@ deps:
                    (module: { node_modules }:
                       "ln -fs ${node_modules} ${prefix}/${module}"
                    )
-                   foreign-stuff'.node
+                   foreign-deps.node
                 );
           in
           ''
@@ -267,7 +269,7 @@ deps:
                     ''
                     mv output $out
                     cd $out
-                    ${foreign-stuff (trans-deps ++ dependencies) "."}
+                    ${add-foreign-deps (trans-deps ++ dependencies) "."}
                     '';
                 };
 
@@ -362,10 +364,10 @@ deps:
 
         command =
           import ./purs-nix-command.nix
-            { all-dependencies = dependencies ++ test-dependencies;
+            { add-foreign-deps = add-foreign-deps (get-all-deps dependencies);
+              all-dependencies = dependencies ++ test-dependencies;
               inherit all-dep-globs dep-globs nodejs pkgs purescript;
               utils = u;
-              foreign = foreign-stuff (get-all-deps dependencies);
             };
       };
   }

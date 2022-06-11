@@ -34,9 +34,20 @@
 
           test-dependencies = [ ps-pkgs."assert" ];
           srcs = [ ./src ./src2 ];
+
+          foreign.Forn =
+            { derivation = pkgs.runCommand "my-js" {} "mkdir $out; ln -s ${./my-js.js} $out/my-js.js";
+              paths.myJs = /my-js.js;
+            };
         };
   in
   { defaultPackage = ps.modules.Main.app { name = "test"; };
+
+    packages =
+      with ps.modules.Forn;
+      { bundle = bundle { esbuild.format = "cjs"; esbuild.platform = "node"; main = false; };
+        output = output {};
+      };
 
     devShell =
       make-shell

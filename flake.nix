@@ -26,6 +26,7 @@
         }:
         import ./purs-nix.nix (import ./deps.nix { inherit inputs system; });
 
+     inherit (inputs) self;
       defaultTemplate =
         { description = "A basic purs-nix project";
           path = "${./templates/default}";
